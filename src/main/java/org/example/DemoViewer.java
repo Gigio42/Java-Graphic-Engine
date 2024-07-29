@@ -62,7 +62,7 @@ public class DemoViewer {
                 });
                 Matrix3 transform = headingTransform.multiply(pitchTransform);
 
-                g2.setColor(Color.WHITE);
+                g2.setColor(Color.ORANGE);
 
                 for (Triangle t : tris) {
                     Vertex v1 = transform.transform(t.v1);
@@ -123,7 +123,10 @@ public class DemoViewer {
                         }
                     }
 
+                    // Set stroke to make the edge line thicker
+                    g2.setStroke(new BasicStroke(1));
 
+                    // Draw the edges of the triangle
                     Path2D path = new Path2D.Double();
                     path.moveTo(v1.x, v1.y);
                     path.lineTo(v2.x, v2.y);
@@ -132,6 +135,7 @@ public class DemoViewer {
                     g2.draw(path);
                 }
 
+                // Draw the filled triangle
                 g2.drawImage(img, 0, 0, null);
             }
         };
