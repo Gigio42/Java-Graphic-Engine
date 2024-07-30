@@ -4,10 +4,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 
 public class DemoViewer {
+    private static List<Triangle> tris;
 
     public static void main(String[] args) {
         JFrame frame = new JFrame();
@@ -22,14 +24,36 @@ public class DemoViewer {
         JSlider verticalSlider = new JSlider(SwingConstants.VERTICAL, -90, 90, 0);
         pane.add(verticalSlider, BorderLayout.EAST);
 
-        // Tetrahedron
-        List<Triangle> tris = new ArrayList<>();
-        {
-            tris.add(new Triangle(new Vertex(100, 100, 100), new Vertex(-100, -100, 100), new Vertex(-100, 100, -100), Color.WHITE));
-            tris.add(new Triangle(new Vertex(100, 100, 100), new Vertex(-100, -100, 100), new Vertex(100, -100, -100), Color.RED));
-            tris.add(new Triangle(new Vertex(-100, 100, -100), new Vertex(100, -100, -100), new Vertex(100, 100, 100), Color.GREEN));
-            tris.add(new Triangle(new Vertex(-100, 100, -100), new Vertex(100, -100, -100), new Vertex(-100, -100, 100), Color.BLUE));
-        }
+        // Inflate button
+        JButton inflateButton = new JButton("Inflate");
+        inflateButton.addActionListener(e -> {
+            tris = inflate(tris);
+            frame.repaint();
+        });
+        pane.add(inflateButton, BorderLayout.NORTH);
+
+        // Scaling factor
+        double scale = 100.0;
+
+        // Cube
+        tris = new ArrayList<>();
+        tris.add(new Triangle(new Vertex(1 * scale, 1 * scale, 1 * scale), new Vertex(-1 * scale, 1 * scale, 1 * scale), new Vertex(-1 * scale, -1 * scale, 1 * scale), Color.WHITE));
+        tris.add(new Triangle(new Vertex(1 * scale, 1 * scale, 1 * scale), new Vertex(-1 * scale, -1 * scale, 1 * scale), new Vertex(1 * scale, -1 * scale, 1 * scale), Color.WHITE));
+
+        tris.add(new Triangle(new Vertex(1 * scale, 1 * scale, -1 * scale), new Vertex(-1 * scale, 1 * scale, -1 * scale), new Vertex(-1 * scale, -1 * scale, -1 * scale), Color.RED));
+        tris.add(new Triangle(new Vertex(1 * scale, 1 * scale, -1 * scale), new Vertex(-1 * scale, -1 * scale, -1 * scale), new Vertex(1 * scale, -1 * scale, -1 * scale), Color.RED));
+
+        tris.add(new Triangle(new Vertex(1 * scale, 1 * scale, 1 * scale), new Vertex(-1 * scale, 1 * scale, 1 * scale), new Vertex(-1 * scale, 1 * scale, -1 * scale), Color.GREEN));
+        tris.add(new Triangle(new Vertex(1 * scale, 1 * scale, 1 * scale), new Vertex(-1 * scale, 1 * scale, -1 * scale), new Vertex(1 * scale, 1 * scale, -1 * scale), Color.GREEN));
+
+        tris.add(new Triangle(new Vertex(1 * scale, -1 * scale, 1 * scale), new Vertex(-1 * scale, -1 * scale, 1 * scale), new Vertex(-1 * scale, -1 * scale, -1 * scale), Color.BLUE));
+        tris.add(new Triangle(new Vertex(1 * scale, -1 * scale, 1 * scale), new Vertex(-1 * scale, -1 * scale, -1 * scale), new Vertex(1 * scale, -1 * scale, -1 * scale), Color.BLUE));
+
+        tris.add(new Triangle(new Vertex(1 * scale, 1 * scale, 1 * scale), new Vertex(1 * scale, -1 * scale, 1 * scale), new Vertex(1 * scale, -1 * scale, -1 * scale), Color.YELLOW));
+        tris.add(new Triangle(new Vertex(1 * scale, 1 * scale, 1 * scale), new Vertex(1 * scale, -1 * scale, -1 * scale), new Vertex(1 * scale, 1 * scale, -1 * scale), Color.YELLOW));
+
+        tris.add(new Triangle(new Vertex(-1 * scale, 1 * scale, 1 * scale), new Vertex(-1 * scale, -1 * scale, 1 * scale), new Vertex(-1 * scale, -1 * scale, -1 * scale), Color.CYAN));
+        tris.add(new Triangle(new Vertex(-1 * scale, 1 * scale, 1 * scale), new Vertex(-1 * scale, -1 * scale, -1 * scale), new Vertex(-1 * scale, 1 * scale, -1 * scale), Color.CYAN));
 
         // Display
         JPanel renderPanel = new JPanel() {
@@ -44,9 +68,7 @@ public class DemoViewer {
 
                 // Depth buffer
                 double[] zBuffer = new double[img.getWidth() * img.getHeight()];
-                for (int q = 0; q < zBuffer.length; q++) {
-                    zBuffer[q] = Double.NEGATIVE_INFINITY;
-                }
+                Arrays.fill(zBuffer, Double.NEGATIVE_INFINITY);
 
                 double heading = Math.toRadians(horizontalSlider.getValue());
                 Matrix3 headingTransform = new Matrix3(new double[]{
@@ -148,6 +170,28 @@ public class DemoViewer {
 
         frame.setSize(400, 400);
         frame.setVisible(true);
+    }
+
+    public static List<Triangle> inflate(List<Triangle> tris) {
+        List<Triangle> result = new ArrayList<>();
+        for (Triangle t : tris) {
+            Vertex m1 = new Vertex((t.v1.x + t.v2.x) / 2, (t.v1.y + t.v2.y) / 2, (t.v1.z + t.v2.z) / 2);
+            Vertex m2 = new Vertex((t.v2.x + t.v3.x) / 2, (t.v2.y + t.v3.y) / 2, (t.v2.z + t.v3.z) / 2);
+            Vertex m3 = new Vertex((t.v1.x + t.v3.x) / 2, (t.v1.y + t.v3.y) / 2, (t.v1.z + t.v3.z) / 2);
+            result.add(new Triangle(t.v1, m1, m3, t.color));
+            result.add(new Triangle(t.v2, m1, m2, t.color));
+            result.add(new Triangle(t.v3, m2, m3, t.color));
+            result.add(new Triangle(m1, m2, m3, t.color));
+        }
+        for (Triangle t : result) {
+            for (Vertex v : new Vertex[]{t.v1, t.v2, t.v3}) {
+                double l = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z) / Math.sqrt(30000);
+                v.x /= l;
+                v.y /= l;
+                v.z /= l;
+            }
+        }
+        return result;
     }
 
     public static Color getShade(Color color, double shade) {
